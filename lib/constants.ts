@@ -1,0 +1,1 @@
+export const COLORS={purple:"#170059",darkPurple:"#0F003D",navy:"#040451",red:"#FF0000",cream:"#FEFDF8"};

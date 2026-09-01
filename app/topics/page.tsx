@@ -1,0 +1,2 @@
+import {topics} from "@/data/topics";import {Container} from "@/components/ui/Container";import {SectionHeading} from "@/components/ui/SectionHeading";import {TopicCard} from "@/components/cards/TopicCard";
+export default function TopicsPage(){return <main className="min-h-screen bg-[var(--vbc-black)] py-20 lg:py-28"><Container><SectionHeading eyebrow="Browse" title="Topics"/><div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{topics.map((t,i)=><TopicCard key={t} topic={t} index={i}/>)}</div></Container></main>}

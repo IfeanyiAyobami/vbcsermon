@@ -1,0 +1,10 @@
+@import "tailwindcss";
+:root{--vbc-purple:#170059;--vbc-purple-dark:#0f003d;--vbc-navy:#040451;--vbc-red:#ff0000;--vbc-cream:#fefdf8;--vbc-black:#040451;--vbc-panel:#170059;--vbc-panel-2:#1c0e66}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--vbc-black);color:#fff}
+.vbc-display{font-family:var(--font-anton),Impact,sans-serif}
+.vbc-grid{background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:70px 70px}
+.vbc-card{transition:transform .45s cubic-bezier(.2,.7,.2,1),border-color .45s ease}.vbc-card:hover{transform:translateY(-7px)}
+.vbc-card-image{transition:transform .8s cubic-bezier(.2,.7,.2,1)}.vbc-card:hover .vbc-card-image{transform:scale(1.07)}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}.vbc-marquee{animation:marquee 25s linear infinite}
+.vbc-scrollbar-none{scrollbar-width:none}.vbc-scrollbar-none::-webkit-scrollbar{display:none}
+::selection{background:#ff0000;color:#fff}
