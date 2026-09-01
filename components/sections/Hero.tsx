@@ -32,7 +32,7 @@ export function Hero(){
       <Container className="relative flex h-full items-end pb-16 sm:items-center sm:pb-0">
         <div className="max-w-xl">
           <span className="inline-block rounded-full bg-[#ff0000] px-3 py-1 text-[10px] font-bold uppercase tracking-[.25em]">Featured</span>
-          <h1 className="vbc-display mt-5 text-[clamp(38px,7vw,72px)] uppercase leading-[.88]">{slide.title}</h1>
+          <h1 className="vbc-display mt-5 text-[clamp(38px,7vw,72px)] uppercase leading-[1.05] sm:leading-[.88]">{slide.title}</h1>
           <p className="mt-3 text-sm font-semibold text-white/50">{slide.category} • {slide.series}</p>
           <p className="mt-4 line-clamp-2 max-w-md text-sm leading-7 text-white/55 sm:text-base">{slide.description}</p>
 
