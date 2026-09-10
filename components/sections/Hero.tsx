@@ -4,25 +4,24 @@ import Image from "next/image";
 import {useEffect,useState} from "react";
 import {Play,Info} from "lucide-react";
 import {Container} from "@/components/ui/Container";
-import {sermons} from "@/data/sermons";
+import type {Sermon} from "@/data/sermons";
 
-const slides=sermons.slice(0,3);
-
-export function Hero(){
+export function Hero({slides}:{slides:Sermon[]}){
   const [active,setActive]=useState(0);
 
   useEffect(()=>{
+    if(slides.length<2)return;
     const t=setInterval(()=>setActive(i=>(i+1)%slides.length),6500);
     return ()=>clearInterval(t);
-  },[]);
+  },[slides.length]);
 
+  if(!slides.length)return null;
   const slide=slides[active];
 
   return (
     <section className="relative h-[560px] w-full overflow-hidden sm:h-[620px]">
       {slides.map((s,i)=>(
         <div key={s.id} className={`absolute inset-0 transition-opacity duration-700 ${i===active?"opacity-100":"opacity-0"}`}>
-          {/* Image placeholder — swap for real photography/thumbnails per message */}
           <Image src={s.image} alt={s.title} fill priority={i===0} className="object-cover" sizes="100vw"/>
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--vbc-black)] via-[var(--vbc-black)]/70 to-transparent"/>
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--vbc-black)] via-transparent to-transparent"/>
@@ -47,16 +46,18 @@ export function Hero(){
         </div>
       </Container>
 
-      <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2">
-        {slides.map((s,i)=>(
-          <button
-            key={s.id}
-            onClick={()=>setActive(i)}
-            aria-label={`Show slide ${i+1}`}
-            className={`h-1.5 rounded-full transition-all ${i===active?"w-7 bg-[#ff0000]":"w-1.5 bg-white/30 hover:bg-white/50"}`}
-          />
-        ))}
-      </div>
+      {slides.length>1&&(
+        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2">
+          {slides.map((s,i)=>(
+            <button
+              key={s.id}
+              onClick={()=>setActive(i)}
+              aria-label={`Show slide ${i+1}`}
+              className={`h-1.5 rounded-full transition-all ${i===active?"w-7 bg-[#ff0000]":"w-1.5 bg-white/30 hover:bg-white/50"}`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

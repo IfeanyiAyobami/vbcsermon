@@ -1,4 +1,4 @@
-export type Sermon={id:string;slug:string;title:string;series:string;seriesSlug:string;category:string;topics:string[];speaker:string;date:string;duration:string;description:string;image:string;featured?:boolean};
+export type Sermon={id:string;slug:string;title:string;series:string;seriesSlug:string;category:string;topics:string[];speaker:string;date:string;duration:string;description:string;image:string;audioUrl?:string;featured?:boolean};
 
 export const sermons:Sermon[]=[
 {id:"1",slug:"why-your-victory-matters",title:"Why Your Victory Matters",series:"Victory",seriesSlug:"victory",category:"Faith",topics:["Faith","Hope"],speaker:"Sola Kolade",date:"August 23, 2026",duration:"58:12",description:"Your victory in Christ isn't just personal — it carries weight for everyone watching your life.",image:"/images/sermons/why-your-victory-matters.jpg",featured:true},

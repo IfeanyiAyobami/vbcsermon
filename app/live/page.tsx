@@ -1,28 +1,31 @@
 import {Radio,Clock3,PlayCircle} from "lucide-react";
 import Image from "next/image";
-import {sermons} from "@/data/sermons";
 import {Container} from "@/components/ui/Container";
 import {SectionHeading} from "@/components/ui/SectionHeading";
 import {SermonRowCard} from "@/components/cards/SermonRowCard";
+import {getLatestSermons} from "@/lib/data/sermons";
+
+export const revalidate=60;
 
 // Real weekly schedule.
 const schedule=[
-  {day:"Sunday",time:"8:00AM",label:"First Service"},
-  {day:"Sunday",time:"10:00 AM",label:"Second Service"},
-  {day:"Tuesday",time:"5:30 PM",label:"Hotline To Heaven"},
-  {day:"Thursday",time:"5:30PM",label:"Hour Of Emphasis (Interdenominational Teaching Service)"},
+  {day:"Sunday",time:"8:00 – 9:30 AM",label:"First Service"},
+  {day:"Sunday",time:"10:00 AM – 12:00 PM",label:"Second Service"},
+  {day:"Tuesday",time:"",label:"Hotline To Heaven"},
+  {day:"Thursday",time:"",label:"Hour Of Emphasis (Interdenominational Teaching Service)"},
 ];
 
 // TODO: replace "#" with your actual live stream link (YouTube Live, Facebook Live, or church app).
 const LIVE_STREAM_URL="#";
 
-export default function LivePage(){
-  const recent=sermons.slice(0,6);
+export default async function LivePage(){
+  const recent=await getLatestSermons(6);
 
   return (
     <main className="min-h-screen bg-[var(--vbc-black)] py-16 text-white lg:py-20">
       <Container>
-        <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.32em] text-[#ff0000]">
+        <Image src="/images/brand/vine-branch-tv-logo-cropped.png" alt="Vine Branch TV" width={747} height={576} className="h-14 w-auto"/>
+        <p className="mt-6 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.32em] text-[#ff0000]">
           <Radio size={14}/> Live
         </p>
         <h1 className="vbc-display mt-3 text-6xl uppercase leading-none sm:text-8xl">Join Us Live</h1>

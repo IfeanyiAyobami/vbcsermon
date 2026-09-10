@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import {usePathname} from "next/navigation";
 import {Home,Radio,Clapperboard,Search} from "lucide-react";
 
@@ -15,7 +16,7 @@ export function Sidebar(){
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-white/10 bg-[var(--vbc-panel)] lg:flex">
       <Link href="/" className="flex h-[78px] shrink-0 items-center border-b border-white/10 px-7">
-        <span className="vbc-display text-3xl leading-none">VBC<span className="text-[#ff0000]">.</span></span>
+        <Image src="/images/brand/vine-branch-tv-logo-cropped.png" alt="Vine Branch TV" width={747} height={576} className="h-9 w-auto"/>
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1.5 p-4">

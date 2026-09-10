@@ -2,11 +2,16 @@ import {Hero} from "@/components/sections/Hero";
 import {LatestSermons} from "@/components/sections/LatestSermons";
 import {AllSermons} from "@/components/sections/AllSermons";
 import {FeaturedSeries} from "@/components/sections/FeaturedSeries";
+import {getFeaturedSermons} from "@/lib/data/sermons";
 
-export default function HomePage(){
+export const revalidate=60;
+
+export default async function HomePage(){
+  const heroSlides=await getFeaturedSermons();
+
   return (
     <>
-      <Hero/>
+      <Hero slides={heroSlides}/>
       <LatestSermons/>
       <AllSermons/>
       <FeaturedSeries/>

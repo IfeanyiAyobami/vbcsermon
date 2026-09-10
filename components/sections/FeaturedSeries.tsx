@@ -1,9 +1,11 @@
-import {series} from "@/data/series";
+import {getFeaturedSeries} from "@/lib/data/series";
 import {Container} from "@/components/ui/Container";
 import {SectionHeading} from "@/components/ui/SectionHeading";
 import {SeriesCard} from "@/components/cards/SeriesCard";
 
-export function FeaturedSeries(){
+export async function FeaturedSeries(){
+  const series=await getFeaturedSeries();
+
   return (
     <section className="py-10">
       <Container>

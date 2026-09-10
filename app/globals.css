@@ -1,5 +1,5 @@
 @import "tailwindcss";
-:root{--vbc-purple:#170059;--vbc-purple-dark:#0f003d;--vbc-navy:#040451;--vbc-red:#ff0000;--vbc-cream:#fefdf8;--vbc-black:#040451;--vbc-panel:#170059;--vbc-panel-2:#1c0e66}
+:root{--vbc-purple:#170059;--vbc-purple-dark:#0f003d;--vbc-navy:#040451;--vbc-red:#ff0000;--vbc-cream:#fefdf8;--vbc-black:#040451;--vbc-panel:#170059;--vbc-panel-2:#1c0e66;--font-anton:'Anton',Impact,sans-serif;--font-body:'DM Sans',-apple-system,sans-serif}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--vbc-black);color:#fff}
 .vbc-display{font-family:var(--font-anton),Impact,sans-serif}
 .vbc-grid{background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:70px 70px}

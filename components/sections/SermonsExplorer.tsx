@@ -1,15 +1,14 @@
 "use client";
 import {useMemo,useState} from "react";
-import {sermons} from "@/data/sermons";
-import {topics} from "@/data/topics";
 import {SermonCard} from "@/components/cards/SermonCard";
+import type {Sermon} from "@/data/sermons";
 
-export function SermonsExplorer({initialTopic}:{initialTopic?:string}){
+export function SermonsExplorer({sermons,topics,initialTopic}:{sermons:Sermon[];topics:string[];initialTopic?:string}){
   const normalized=(t:string)=>t.toLowerCase().replaceAll(" ","-");
   const startTopic=initialTopic?topics.find(t=>normalized(t)===initialTopic)??null:null;
   const [active,setActive]=useState<string|null>(startTopic);
 
-  const results=useMemo(()=>active?sermons.filter(s=>s.topics.some(t=>t.toLowerCase()===active.toLowerCase())):sermons,[active]);
+  const results=useMemo(()=>active?sermons.filter(s=>s.topics.some(t=>t.toLowerCase()===active.toLowerCase())):sermons,[active,sermons]);
 
   return (
     <div>
@@ -38,7 +37,7 @@ export function SermonsExplorer({initialTopic}:{initialTopic?:string}){
         {active?<>Showing <span className="font-semibold text-white">{results.length}</span> {results.length===1?"message":"messages"} on <span className="font-semibold text-white">{active}</span></>:<>Showing all <span className="font-semibold text-white">{results.length}</span> messages</>}
       </p>
 
-      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
         {results.length?results.map(s=><SermonCard key={s.id} sermon={s}/>):
           <div className="col-span-full rounded-2xl border border-dashed border-white/15 bg-white/[.03] py-16 text-center">
             <p className="text-white/35">No sermons are tagged under this topic yet.</p>
