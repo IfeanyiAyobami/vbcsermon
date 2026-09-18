@@ -21,8 +21,8 @@ export function Hero({slides}:{slides:Sermon[]}){
   return (
     <section className="relative h-[560px] w-full overflow-hidden sm:h-[620px]">
       {slides.map((s,i)=>(
-        <div key={s.id} className={`absolute inset-0 transition-opacity duration-700 ${i===active?"opacity-100":"opacity-0"}`}>
-          <Image src={s.image} alt={s.title} fill priority={i===0} className="object-cover" sizes="100vw"/>
+        <div key={s.id} className={`absolute inset-0 bg-gradient-to-br from-[#170059] to-[var(--vbc-black)] transition-opacity duration-700 ${i===active?"opacity-100":"opacity-0"}`}>
+          {s.image&&<Image src={s.image} alt={s.title} fill priority={i===0} className="object-cover" sizes="100vw"/>}
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--vbc-black)] via-[var(--vbc-black)]/70 to-transparent"/>
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--vbc-black)] via-transparent to-transparent"/>
         </div>

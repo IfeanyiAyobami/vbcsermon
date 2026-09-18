@@ -18,7 +18,7 @@ export default async function SermonPage({params}:{params:Promise<{slug:string}>
       <Container>
         <div className="grid gap-10 lg:grid-cols-[1.5fr_.7fr]">
           <div>
-            <SermonPlayer title={sermon.title} audioUrl={sermon.audioUrl}/>
+            <SermonPlayer sermon={sermon}/>
             <p className="mt-8 text-[11px] font-bold uppercase tracking-[.25em] text-red-400">{sermon.series}</p>
             <h1 className="vbc-display mt-3 text-6xl uppercase leading-[.85] sm:text-8xl">{sermon.title}</h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-white/50">{sermon.description}</p>

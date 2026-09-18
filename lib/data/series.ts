@@ -20,7 +20,7 @@ export async function getFeaturedSeries():Promise<SermonSeries[]>{
 }
 
 export async function getAllSeries():Promise<SermonSeries[]>{
-  const {data,error}=await supabase.from("series").select("*").order("created_at",{ascending:true});
+  const {data,error}=await supabase.from("series").select("*").order("created_at",{ascending:false});
   if(error){console.error("getAllSeries:",error.message);return [];}
   return (data??[]).map(mapSeries);
 }
