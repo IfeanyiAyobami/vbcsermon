@@ -30,7 +30,7 @@ export function SermonPlayer({sermon}:{sermon:Sermon}){
             <AudioLines size={16} strokeWidth={2.4}/>
             <p className="text-[10px] font-bold uppercase tracking-[.26em]">{active?"Now playing":"Listen to sermon"}</p>
           </div>
-          <h2 className="vbc-display mt-2 line-clamp-2 text-[clamp(1.55rem,3vw,2.65rem)] uppercase leading-[.95] text-white">{sermon.title}</h2>
+          <h2 className="vbc-display mt-2 line-clamp-2 text-[1.35rem] uppercase leading-[1.08] sm:text-[clamp(1.55rem,3vw,2.65rem)] sm:leading-[.98] text-white">{sermon.title}</h2>
           <p className="mt-2 hidden text-xs text-white/50 sm:block">{sermon.series} <span className="mx-1.5 text-white/25">•</span> {sermon.date} <span className="mx-1.5 text-white/25">•</span> {sermon.duration}</p>
           <button onClick={()=>toggle(sermon)} className="mt-5 inline-flex items-center gap-3 rounded-full bg-white px-5 py-3 text-sm font-bold text-[#170059] shadow-[0_8px_25px_rgba(0,0,0,.18)] transition hover:scale-[1.03] sm:px-6">
             {active&&isPlaying?<><Pause size={17} fill="currentColor"/> Pause sermon</>:<><Play size={17} fill="currentColor"/> Play sermon</>}

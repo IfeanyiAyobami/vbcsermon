@@ -1,8 +1,7 @@
 import {notFound} from "next/navigation";
 import {Container} from "@/components/ui/Container";
-import {SermonPlayer} from "@/components/sermon/SermonPlayer";
-import {SermonCard} from "@/components/cards/SermonCard";
-import {getSermonBySlug,getSermonsBySeriesSlug} from "@/lib/data/sermons";
+import {SermonDetailExperience} from "@/components/sermon/SermonDetailExperience";
+import {getSermonBySlug,getSermonsBySeriesSlug,getAllSermons} from "@/lib/data/sermons";
 
 export const revalidate=60;
 
@@ -10,41 +9,10 @@ export default async function SermonPage({params}:{params:Promise<{slug:string}>
   const {slug}=await params;
   const sermon=await getSermonBySlug(slug);
   if(!sermon)notFound();
-
-  const related=(await getSermonsBySeriesSlug(sermon.seriesSlug)).filter(s=>s.id!==sermon.id).slice(0,3);
-
-  return (
-    <main className="min-h-screen bg-[var(--vbc-black)] py-16 lg:py-24">
-      <Container>
-        <div className="grid gap-10 lg:grid-cols-[1.5fr_.7fr]">
-          <div>
-            <SermonPlayer sermon={sermon}/>
-            <p className="mt-8 text-[11px] font-bold uppercase tracking-[.25em] text-red-400">{sermon.series}</p>
-            <h1 className="vbc-display mt-3 text-6xl uppercase leading-[.85] sm:text-8xl">{sermon.title}</h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-white/50">{sermon.description}</p>
-          </div>
-          <aside className="rounded-[28px] border border-white/10 bg-white/[.04] p-7">
-            <p className="text-[10px] font-bold uppercase tracking-[.25em] text-white/35">Sermon details</p>
-            <div className="mt-7 grid gap-6">
-              {[["Speaker",sermon.speaker],["Date",sermon.date],["Duration",sermon.duration],["Category",sermon.category]].map(([a,b])=>(
-                <div key={a}>
-                  <span className="block text-xs text-white/30">{a}</span>
-                  <span className="mt-1 block font-semibold">{b}</span>
-                </div>
-              ))}
-            </div>
-          </aside>
-        </div>
-
-        {related.length>0&&(
-          <section className="mt-24">
-            <h2 className="vbc-display text-5xl uppercase">More From This Series</h2>
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
-              {related.map(s=><SermonCard key={s.id} sermon={s}/>)}
-            </div>
-          </section>
-        )}
-      </Container>
-    </main>
-  );
+  let related=(await getSermonsBySeriesSlug(sermon.seriesSlug)).filter(s=>s.id!==sermon.id).slice(0,3);
+  if(related.length<3){
+    const all=(await getAllSermons()).filter(s=>s.id!==sermon.id&&!related.some(r=>r.id===s.id));
+    related=[...related,...all].slice(0,3);
+  }
+  return <main className="sermon-detail-page min-h-screen"><Container><SermonDetailExperience sermon={sermon} related={related}/></Container></main>;
 }
