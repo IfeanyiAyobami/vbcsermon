@@ -2,106 +2,38 @@
 
 import {createContext,useCallback,useContext,useEffect,useRef,useState} from "react";
 import Image from "next/image";
-import {Pause,Play,RotateCcw,RotateCw,SkipBack,SkipForward,X} from "lucide-react";
+import {Pause,Play,RotateCcw,RotateCw,X} from "lucide-react";
 import type {Sermon} from "@/data/sermons";
 
-type PlayerContextValue={
-  current:Sermon|null;
-  isPlaying:boolean;
-  currentTime:number;
-  duration:number;
-  play:(sermon:Sermon)=>void;
-  toggle:(sermon?:Sermon)=>void;
-  seek:(seconds:number)=>void;
-  skip:(seconds:number)=>void;
-  close:()=>void;
-};
-
+type PlayerContextValue={current:Sermon|null;isPlaying:boolean;currentTime:number;duration:number;play:(sermon:Sermon)=>void;toggle:(sermon?:Sermon)=>void;seek:(seconds:number)=>void;skip:(seconds:number)=>void;close:()=>void};
+type ProgressEntry={sermon:Sermon;position:number;duration:number;updatedAt:number};
+type PersistedPlayer={sermon:Sermon;position:number;duration:number;updatedAt:number};
 const PlayerContext=createContext<PlayerContextValue|null>(null);
+const PLAYER_KEY="vbc-player-state-v1",PROGRESS_KEY="vbc-sermon-progress-v1";
 
-function fmt(seconds:number){
-  if(!Number.isFinite(seconds)||seconds<0)return "00:00";
-  const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=Math.floor(seconds%60);
-  return h?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-}
+function fmt(seconds:number){if(!Number.isFinite(seconds)||seconds<0)return "00:00";const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=Math.floor(seconds%60);return h?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`}
+function readProgress():Record<string,ProgressEntry>{try{return JSON.parse(localStorage.getItem(PROGRESS_KEY)||"{}")||{}}catch{return {}}}
 
 export function AudioPlayerProvider({children}:{children:React.ReactNode}){
-  const audioRef=useRef<HTMLAudioElement|null>(null);
-  const currentRef=useRef<Sermon|null>(null);
-  const [current,setCurrent]=useState<Sermon|null>(null);
-  const [isPlaying,setIsPlaying]=useState(false);
-  const [currentTime,setCurrentTime]=useState(0);
-  const [duration,setDuration]=useState(0);
-  const countedRef=useRef<string|null>(null);
+ const audioRef=useRef<HTMLAudioElement|null>(null),currentRef=useRef<Sermon|null>(null),pendingSeekRef=useRef(0),lastSavedSecondRef=useRef(-1);
+ const [current,setCurrent]=useState<Sermon|null>(null),[isPlaying,setIsPlaying]=useState(false),[currentTime,setCurrentTime]=useState(0),[duration,setDuration]=useState(0);const countedRef=useRef<string|null>(null);
+ const persist=useCallback((position:number,total:number)=>{const sermon=currentRef.current;if(!sermon||!sermon.audioUrl)return;const safeTotal=Number.isFinite(total)?total:0,safePos=Math.max(0,Number.isFinite(position)?position:0);try{const progress=readProgress();if(safeTotal>0&&safePos/safeTotal>=.95){delete progress[sermon.id];localStorage.removeItem(PLAYER_KEY)}else if(safePos>=3){const entry={sermon,position:safePos,duration:safeTotal,updatedAt:Date.now()};progress[sermon.id]=entry;localStorage.setItem(PLAYER_KEY,JSON.stringify(entry))}localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress));window.dispatchEvent(new Event("vbc-progress-updated"))}catch{}},[]);
 
-  useEffect(()=>{
-    const audio=new Audio();
-    audio.preload="metadata";
-    audioRef.current=audio;
-    const time=()=>{
-      setCurrentTime(audio.currentTime||0);
-      if(currentRef.current&&audio.currentTime>=20&&countedRef.current!==currentRef.current.id){
-        countedRef.current=currentRef.current.id;
-        let listenerId=localStorage.getItem("vbc-listener-id");
-        if(!listenerId){listenerId=crypto.randomUUID();localStorage.setItem("vbc-listener-id",listenerId)}
-        fetch("/api/analytics/play",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({sermonId:currentRef.current.id,listenerId,listenedSeconds:Math.floor(audio.currentTime)}),keepalive:true}).catch(()=>{});
-      }
-    };
-    const meta=()=>setDuration(Number.isFinite(audio.duration)?audio.duration:0);
-    const playing=()=>setIsPlaying(true);
-    const paused=()=>setIsPlaying(false);
-    const ended=()=>setIsPlaying(false);
-    audio.addEventListener("timeupdate",time); audio.addEventListener("loadedmetadata",meta);
-    audio.addEventListener("play",playing); audio.addEventListener("pause",paused); audio.addEventListener("ended",ended);
-    return()=>{audio.pause();audio.removeEventListener("timeupdate",time);audio.removeEventListener("loadedmetadata",meta);audio.removeEventListener("play",playing);audio.removeEventListener("pause",paused);audio.removeEventListener("ended",ended)};
-  },[]);
+ useEffect(()=>{const audio=new Audio();audio.preload="metadata";audioRef.current=audio;
+  const time=()=>{const pos=audio.currentTime||0;setCurrentTime(pos);const whole=Math.floor(pos);if(whole>=3&&whole%5===0&&whole!==lastSavedSecondRef.current){lastSavedSecondRef.current=whole;persist(pos,audio.duration||0)}if(currentRef.current&&pos>=20&&countedRef.current!==currentRef.current.id){countedRef.current=currentRef.current.id;let listenerId=localStorage.getItem("vbc-listener-id");if(!listenerId){listenerId=crypto.randomUUID();localStorage.setItem("vbc-listener-id",listenerId)}fetch("/api/analytics/play",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({sermonId:currentRef.current.id,listenerId,listenedSeconds:Math.floor(pos)}),keepalive:true}).catch(()=>{})}};
+  const meta=()=>{const d=Number.isFinite(audio.duration)?audio.duration:0;setDuration(d);if(pendingSeekRef.current>0){audio.currentTime=Math.min(pendingSeekRef.current,Math.max(0,d-.5));setCurrentTime(audio.currentTime);pendingSeekRef.current=0}};
+  const playing=()=>setIsPlaying(true),paused=()=>{setIsPlaying(false);persist(audio.currentTime,audio.duration||0)},ended=()=>{setIsPlaying(false);persist(audio.duration||audio.currentTime,audio.duration||0)};
+  audio.addEventListener("timeupdate",time);audio.addEventListener("loadedmetadata",meta);audio.addEventListener("play",playing);audio.addEventListener("pause",paused);audio.addEventListener("ended",ended);
+  try{const raw=localStorage.getItem(PLAYER_KEY);if(raw){const saved=JSON.parse(raw) as PersistedPlayer;if(saved?.sermon?.audioUrl&&saved.position>=3&&(!saved.duration||saved.position/saved.duration<.95)){currentRef.current=saved.sermon;setCurrent(saved.sermon);setCurrentTime(saved.position);setDuration(saved.duration||0);pendingSeekRef.current=saved.position;audio.src=saved.sermon.audioUrl;audio.load()}}}catch{}
+  const before=()=>persist(audio.currentTime,audio.duration||0);window.addEventListener("pagehide",before);
+  return()=>{persist(audio.currentTime,audio.duration||0);audio.pause();window.removeEventListener("pagehide",before);audio.removeEventListener("timeupdate",time);audio.removeEventListener("loadedmetadata",meta);audio.removeEventListener("play",playing);audio.removeEventListener("pause",paused);audio.removeEventListener("ended",ended)};
+ },[persist]);
 
-  const play=useCallback((sermon:Sermon)=>{
-    if(!sermon.audioUrl)return;
-    const audio=audioRef.current;if(!audio)return;
-    if(current?.id!==sermon.id){audio.src=sermon.audioUrl;audio.load();currentRef.current=sermon;setCurrent(sermon);setCurrentTime(0);setDuration(0)}
-    audio.play().catch(()=>setIsPlaying(false));
-  },[current]);
-
-  const toggle=useCallback((sermon?:Sermon)=>{
-    const audio=audioRef.current;if(!audio)return;
-    if(sermon&&current?.id!==sermon.id){play(sermon);return}
-    if(!current&&sermon){play(sermon);return}
-    if(audio.paused)audio.play().catch(()=>setIsPlaying(false));else audio.pause();
-  },[current,play]);
-
-  const seek=useCallback((seconds:number)=>{const a=audioRef.current;if(a)a.currentTime=Math.max(0,Math.min(seconds,a.duration||seconds))},[]);
-  const skip=useCallback((seconds:number)=>{const a=audioRef.current;if(a)seek(a.currentTime+seconds)},[seek]);
-  const close=useCallback(()=>{const a=audioRef.current;if(a){a.pause();a.removeAttribute("src");a.load()}currentRef.current=null;setCurrent(null);setCurrentTime(0);setDuration(0)},[]);
-
-  return <PlayerContext.Provider value={{current,isPlaying,currentTime,duration,play,toggle,seek,skip,close}}>
-    {children}
-    {current&&<GlobalAudioPlayer sermon={current}/>} 
-  </PlayerContext.Provider>;
+ const play=useCallback((sermon:Sermon)=>{if(!sermon.audioUrl)return;const audio=audioRef.current;if(!audio)return;if(currentRef.current?.id!==sermon.id){if(currentRef.current)persist(audio.currentTime,audio.duration||0);audio.src=sermon.audioUrl;currentRef.current=sermon;setCurrent(sermon);setCurrentTime(0);setDuration(0);lastSavedSecondRef.current=-1;try{const saved=readProgress()[sermon.id];pendingSeekRef.current=saved?.position||0}catch{pendingSeekRef.current=0}audio.load()}audio.play().catch(()=>setIsPlaying(false))},[persist]);
+ const toggle=useCallback((sermon?:Sermon)=>{const audio=audioRef.current;if(!audio)return;if(sermon&&currentRef.current?.id!==sermon.id){play(sermon);return}if(!currentRef.current&&sermon){play(sermon);return}if(audio.paused)audio.play().catch(()=>setIsPlaying(false));else audio.pause()},[play]);
+ const seek=useCallback((seconds:number)=>{const a=audioRef.current;if(a){a.currentTime=Math.max(0,Math.min(seconds,a.duration||seconds));persist(a.currentTime,a.duration||0)}},[persist]);const skip=useCallback((seconds:number)=>{const a=audioRef.current;if(a)seek(a.currentTime+seconds)},[seek]);
+ const close=useCallback(()=>{const a=audioRef.current;if(a){persist(a.currentTime,a.duration||0);a.pause();a.removeAttribute("src");a.load()}currentRef.current=null;setCurrent(null);setCurrentTime(0);setDuration(0);try{localStorage.removeItem(PLAYER_KEY)}catch{}},[persist]);
+ return <PlayerContext.Provider value={{current,isPlaying,currentTime,duration,play,toggle,seek,skip,close}}>{children}{current&&<GlobalAudioPlayer sermon={current}/>}</PlayerContext.Provider>;
 }
-
 export function useAudioPlayer(){const ctx=useContext(PlayerContext);if(!ctx)throw new Error("useAudioPlayer must be used inside AudioPlayerProvider");return ctx}
-
-function GlobalAudioPlayer({sermon}:{sermon:Sermon}){
-  const {isPlaying,currentTime,duration,toggle,seek,skip,close}=useAudioPlayer();
-  return <div className="fixed inset-x-2 bottom-[72px] z-[80] overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-r from-[#24118f]/90 via-[#31209c]/85 to-[#20117b]/90 p-2.5 shadow-[0_18px_55px_rgba(9,0,75,0.48),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl backdrop-saturate-150 sm:inset-x-4 sm:bottom-4 lg:left-[256px] lg:p-3 before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_12%_120%,rgba(255,20,45,0.22),transparent_32%),radial-gradient(circle_at_85%_-30%,rgba(82,111,255,0.22),transparent_38%)] before:content-['']">
-    <div className="relative z-10 flex items-center gap-3">
-      <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-white/5 sm:size-14">{sermon.image&&<Image src={sermon.image} alt="" fill className="object-cover" sizes="56px"/>}</div>
-      <div className="min-w-0 w-[180px] sm:w-[260px]">
-        <p className="truncate text-sm font-bold text-white">{sermon.title}</p><p className="truncate text-[11px] text-white/45">{sermon.series}</p>
-      </div>
-      <div className="hidden flex-1 items-center gap-3 md:flex">
-        <span className="w-12 text-right text-[10px] text-white/45">{fmt(currentTime)}</span>
-        <input aria-label="Audio progress" type="range" min={0} max={duration||1} step={1} value={Math.min(currentTime,duration||1)} onChange={e=>seek(Number(e.target.value))} className="h-1 flex-1 cursor-pointer accent-[#ff172f]"/>
-        <span className="w-12 text-[10px] text-white/45">{fmt(duration)}</span>
-      </div>
-      <div className="ml-auto flex items-center gap-1 sm:gap-2">
-        <button onClick={()=>skip(-10)} aria-label="Back 10 seconds" className="grid size-8 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"><RotateCcw size={16}/></button>
-        <button onClick={()=>toggle()} aria-label={isPlaying?"Pause":"Play"} className="grid size-10 place-items-center rounded-full bg-white text-black hover:scale-105">{isPlaying?<Pause size={18} fill="currentColor"/>:<Play size={18} fill="currentColor"/>}</button>
-        <button onClick={()=>skip(10)} aria-label="Forward 10 seconds" className="grid size-8 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"><RotateCw size={16}/></button>
-        <button onClick={close} aria-label="Close player" className="ml-1 grid size-8 place-items-center rounded-full text-white/45 hover:bg-white/10 hover:text-white"><X size={18}/></button>
-      </div>
-    </div>
-    <div className="relative z-10 mt-2 flex items-center gap-2 md:hidden"><span className="text-[9px] text-white/40">{fmt(currentTime)}</span><input aria-label="Audio progress" type="range" min={0} max={duration||1} step={1} value={Math.min(currentTime,duration||1)} onChange={e=>seek(Number(e.target.value))} className="h-1 flex-1 accent-[#ff172f]"/><span className="text-[9px] text-white/40">{fmt(duration)}</span></div>
-  </div>
-}
+function GlobalAudioPlayer({sermon}:{sermon:Sermon}){const {isPlaying,currentTime,duration,toggle,seek,skip,close}=useAudioPlayer();return <div className="fixed inset-x-2 bottom-[72px] z-[80] overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-r from-[#24118f]/90 via-[#31209c]/85 to-[#20117b]/90 p-2.5 shadow-[0_18px_55px_rgba(9,0,75,0.48),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl backdrop-saturate-150 sm:inset-x-4 sm:bottom-4 lg:left-[256px] lg:p-3 before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_12%_120%,rgba(255,20,45,0.22),transparent_32%),radial-gradient(circle_at_85%_-30%,rgba(82,111,255,0.22),transparent_38%)] before:content-['']"><div className="relative z-10 flex items-center gap-3"><div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-white/5 sm:size-14">{sermon.image&&<Image src={sermon.image} alt="" fill className="object-cover" sizes="56px"/>}</div><div className="min-w-0 w-[180px] sm:w-[260px]"><p className="truncate text-sm font-bold text-white">{sermon.title}</p><p className="truncate text-[11px] text-white/45">{currentTime>3&&!isPlaying?`Resume from ${fmt(currentTime)}`:sermon.series}</p></div><div className="hidden flex-1 items-center gap-3 md:flex"><span className="w-12 text-right text-[10px] text-white/45">{fmt(currentTime)}</span><input aria-label="Audio progress" type="range" min={0} max={duration||1} step={1} value={Math.min(currentTime,duration||1)} onChange={e=>seek(Number(e.target.value))} className="h-1 flex-1 cursor-pointer accent-[#ff172f]"/><span className="w-12 text-[10px] text-white/45">{fmt(duration)}</span></div><div className="ml-auto flex items-center gap-1 sm:gap-2"><button onClick={()=>skip(-10)} aria-label="Back 10 seconds" className="grid size-8 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"><RotateCcw size={16}/></button><button onClick={()=>toggle()} aria-label={isPlaying?"Pause":"Play"} className="grid size-10 place-items-center rounded-full bg-white text-black hover:scale-105">{isPlaying?<Pause size={18} fill="currentColor"/>:<Play size={18} fill="currentColor"/>}</button><button onClick={()=>skip(10)} aria-label="Forward 10 seconds" className="grid size-8 place-items-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"><RotateCw size={16}/></button><button onClick={close} aria-label="Close player" className="ml-1 grid size-8 place-items-center rounded-full text-white/45 hover:bg-white/10 hover:text-white"><X size={18}/></button></div></div><div className="relative z-10 mt-2 flex items-center gap-2 md:hidden"><span className="text-[9px] text-white/40">{fmt(currentTime)}</span><input aria-label="Audio progress" type="range" min={0} max={duration||1} step={1} value={Math.min(currentTime,duration||1)} onChange={e=>seek(Number(e.target.value))} className="h-1 flex-1 accent-[#ff172f]"/><span className="text-[9px] text-white/40">{fmt(duration)}</span></div></div>}
