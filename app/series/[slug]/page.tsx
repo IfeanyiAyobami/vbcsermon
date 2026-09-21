@@ -16,7 +16,7 @@ export default async function SeriesDetailPage({params}:{params:Promise<{slug:st
     <main className="min-h-screen bg-[var(--vbc-black)] py-16 lg:py-24">
       <Container>
         <p className="text-[11px] font-bold uppercase tracking-[.3em] text-red-400">{item.date}</p>
-        <h1 className="vbc-display mt-3 text-7xl uppercase leading-[.82] sm:text-9xl">{item.title}</h1>
+        <h1 className="vbc-display mt-3 max-w-full text-[clamp(2.8rem,14vw,6rem)] uppercase leading-[.88] [overflow-wrap:anywhere] sm:text-9xl sm:[overflow-wrap:normal]">{item.title}</h1>
         <p className="mt-6 max-w-2xl text-white/50">{item.description}</p>
         <div className="mt-14 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
           {items.map(s=><SermonCard key={s.id} sermon={s}/>)}
