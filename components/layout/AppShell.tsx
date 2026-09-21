@@ -4,9 +4,11 @@ import {MobileTopBar} from "@/components/layout/MobileTopBar";
 import {MobileNav} from "@/components/layout/MobileNav";
 import {Footer} from "@/components/layout/Footer";
 import {AudioPlayerProvider} from "@/components/sermon/AudioPlayerProvider";
+import {PlaylistProvider} from "@/components/playlists/PlaylistProvider";
 
 export function AppShell({children}:{children:React.ReactNode}){
   return (
+    <PlaylistProvider>
     <AudioPlayerProvider>
     <div className="min-h-screen bg-[var(--vbc-black)]">
       <Sidebar/>
@@ -19,5 +21,6 @@ export function AppShell({children}:{children:React.ReactNode}){
       <MobileNav/>
     </div>
     </AudioPlayerProvider>
+    </PlaylistProvider>
   );
 }

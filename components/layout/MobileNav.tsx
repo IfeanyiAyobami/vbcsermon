@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
 import {usePathname} from "next/navigation";
-import {Home,Radio,Clapperboard,ExternalLink} from "lucide-react";
+import {Home,Radio,Clapperboard,ExternalLink,ListMusic} from "lucide-react";
 
 const navLinks=[
   {label:"Home",href:"/",icon:Home},
   {label:"Live",href:"/live",icon:Radio},
   {label:"Series",href:"/series",icon:Clapperboard},
+  {label:"Playlists",href:"/playlists",icon:ListMusic},
   {label:"Visit VBC",href:"https://www.vinebranchurch.org/",icon:ExternalLink,external:true},
 ];
 

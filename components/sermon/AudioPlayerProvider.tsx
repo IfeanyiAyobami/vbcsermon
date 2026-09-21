@@ -27,16 +27,26 @@ function fmt(seconds:number){
 
 export function AudioPlayerProvider({children}:{children:React.ReactNode}){
   const audioRef=useRef<HTMLAudioElement|null>(null);
+  const currentRef=useRef<Sermon|null>(null);
   const [current,setCurrent]=useState<Sermon|null>(null);
   const [isPlaying,setIsPlaying]=useState(false);
   const [currentTime,setCurrentTime]=useState(0);
   const [duration,setDuration]=useState(0);
+  const countedRef=useRef<string|null>(null);
 
   useEffect(()=>{
     const audio=new Audio();
     audio.preload="metadata";
     audioRef.current=audio;
-    const time=()=>setCurrentTime(audio.currentTime||0);
+    const time=()=>{
+      setCurrentTime(audio.currentTime||0);
+      if(currentRef.current&&audio.currentTime>=20&&countedRef.current!==currentRef.current.id){
+        countedRef.current=currentRef.current.id;
+        let listenerId=localStorage.getItem("vbc-listener-id");
+        if(!listenerId){listenerId=crypto.randomUUID();localStorage.setItem("vbc-listener-id",listenerId)}
+        fetch("/api/analytics/play",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({sermonId:currentRef.current.id,listenerId,listenedSeconds:Math.floor(audio.currentTime)}),keepalive:true}).catch(()=>{});
+      }
+    };
     const meta=()=>setDuration(Number.isFinite(audio.duration)?audio.duration:0);
     const playing=()=>setIsPlaying(true);
     const paused=()=>setIsPlaying(false);
@@ -49,7 +59,7 @@ export function AudioPlayerProvider({children}:{children:React.ReactNode}){
   const play=useCallback((sermon:Sermon)=>{
     if(!sermon.audioUrl)return;
     const audio=audioRef.current;if(!audio)return;
-    if(current?.id!==sermon.id){audio.src=sermon.audioUrl;audio.load();setCurrent(sermon);setCurrentTime(0);setDuration(0)}
+    if(current?.id!==sermon.id){audio.src=sermon.audioUrl;audio.load();currentRef.current=sermon;setCurrent(sermon);setCurrentTime(0);setDuration(0)}
     audio.play().catch(()=>setIsPlaying(false));
   },[current]);
 
@@ -62,7 +72,7 @@ export function AudioPlayerProvider({children}:{children:React.ReactNode}){
 
   const seek=useCallback((seconds:number)=>{const a=audioRef.current;if(a)a.currentTime=Math.max(0,Math.min(seconds,a.duration||seconds))},[]);
   const skip=useCallback((seconds:number)=>{const a=audioRef.current;if(a)seek(a.currentTime+seconds)},[seek]);
-  const close=useCallback(()=>{const a=audioRef.current;if(a){a.pause();a.removeAttribute("src");a.load()}setCurrent(null);setCurrentTime(0);setDuration(0)},[]);
+  const close=useCallback(()=>{const a=audioRef.current;if(a){a.pause();a.removeAttribute("src");a.load()}currentRef.current=null;setCurrent(null);setCurrentTime(0);setDuration(0)},[]);
 
   return <PlayerContext.Provider value={{current,isPlaying,currentTime,duration,play,toggle,seek,skip,close}}>
     {children}

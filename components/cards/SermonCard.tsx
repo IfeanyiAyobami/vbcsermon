@@ -4,6 +4,7 @@ import Link from "next/link";
 import {CalendarDays,Clock3,Pause,Play} from "lucide-react";
 import type {Sermon} from "@/data/sermons";
 import {useAudioPlayer} from "@/components/sermon/AudioPlayerProvider";
+import {AddToPlaylistButton} from "@/components/playlists/PlaylistProvider";
 
 export function SermonCard({sermon,light=false}:{sermon:Sermon;light?:boolean}){
   const {current,isPlaying,toggle}=useAudioPlayer();
@@ -15,6 +16,7 @@ export function SermonCard({sermon,light=false}:{sermon:Sermon;light?:boolean}){
       </Link>
       <span className="pointer-events-none absolute left-2 top-2 z-20 rounded-full bg-[#ff0000] px-2 py-1 text-[7px] font-bold uppercase tracking-[.15em] sm:left-4 sm:top-4 sm:px-3 sm:py-1.5 sm:text-[9px]">{active?"Now playing":"Sermon"}</span>
       <button type="button" disabled={!sermon.audioUrl} onClick={()=>toggle(sermon)} aria-label={active&&isPlaying?`Pause ${sermon.title}`:`Play ${sermon.title}`} className="absolute bottom-2 right-2 z-30 grid size-9 place-items-center rounded-full bg-white text-[#170059] shadow-lg transition hover:scale-110 disabled:cursor-not-allowed disabled:opacity-40 sm:bottom-4 sm:right-4 sm:size-12">{active&&isPlaying?<Pause size={16} fill="currentColor"/>:<Play size={16} fill="currentColor"/>}</button>
+      <div className="absolute bottom-2 left-2 z-30 sm:bottom-4 sm:left-4"><AddToPlaylistButton sermon={sermon} compact/></div>
     </div>
     <Link href={`/sermon/${sermon.slug}`} className="block p-3 sm:p-6">
       <p className={`text-[8px] font-bold uppercase tracking-[.15em] sm:text-[10px] ${light?"text-[#ff0000]":"text-red-400"}`}>{sermon.series}</p>

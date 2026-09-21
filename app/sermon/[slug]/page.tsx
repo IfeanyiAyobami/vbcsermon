@@ -1,18 +1,3 @@
-import {notFound} from "next/navigation";
-import {Container} from "@/components/ui/Container";
-import {SermonDetailExperience} from "@/components/sermon/SermonDetailExperience";
-import {getSermonBySlug,getSermonsBySeriesSlug,getAllSermons} from "@/lib/data/sermons";
-
+import {notFound} from "next/navigation";import {Container} from "@/components/ui/Container";import {SermonDetailExperience} from "@/components/sermon/SermonDetailExperience";import {getSermonBySlug,getSermonsBySeriesSlug,getAllSermons} from "@/lib/data/sermons";
 export const revalidate=60;
-
-export default async function SermonPage({params}:{params:Promise<{slug:string}>}){
-  const {slug}=await params;
-  const sermon=await getSermonBySlug(slug);
-  if(!sermon)notFound();
-  let related=(await getSermonsBySeriesSlug(sermon.seriesSlug)).filter(s=>s.id!==sermon.id).slice(0,3);
-  if(related.length<3){
-    const all=(await getAllSermons()).filter(s=>s.id!==sermon.id&&!related.some(r=>r.id===s.id));
-    related=[...related,...all].slice(0,3);
-  }
-  return <main className="sermon-detail-page min-h-screen"><Container><SermonDetailExperience sermon={sermon} related={related}/></Container></main>;
-}
+export default async function SermonPage({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const sermon=await getSermonBySlug(slug);if(!sermon)notFound();const seriesRelated=(await getSermonsBySeriesSlug(sermon.seriesSlug)).filter(s=>s.id!==sermon.id).slice(0,4);const all=(await getAllSermons()).filter(s=>s.id!==sermon.id);const latest=all.slice(0,6);return <main className="sermon-detail-page min-h-screen"><Container><SermonDetailExperience sermon={sermon} seriesRelated={seriesRelated} latest={latest}/></Container></main>}
